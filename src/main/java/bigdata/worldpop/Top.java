@@ -67,12 +67,12 @@ import org.apache.hadoop.util.ToolRunner;
 			  public void reduce(NullWritable key, Iterable<Text> values, Context context) throws IOException,
 			  				InterruptedException {
 				  int cpt = 1;
-				  for (Text value : values) {
+		/*		  for (Text value : values) {
 					  topKPop.put(new IntWritable(cpt), value);
 					  if (topKPop.size() > k)
 						  topKPop.remove(topKPop.firstKey());
 					  cpt++;
-				  }
+				  }*/
 				  cpt = 1;
 				  for (Text c : topKPop.descendingMap().values()) {
 					  context.write(new IntWritable(cpt), c);
