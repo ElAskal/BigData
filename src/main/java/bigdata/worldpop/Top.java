@@ -75,8 +75,7 @@ import org.apache.hadoop.util.ToolRunner;
 				  }
 				  cpt = 1;
 				  for (Text c : topKPop.descendingMap().values()) {
-					  String s = new IntWritable(cpt).toString() + c.toString();
-					  System.out.println(s);
+					  context.write(new IntWritable(cpt), c);
 					  cpt++;
 				  }
 			  }
@@ -92,7 +91,7 @@ import org.apache.hadoop.util.ToolRunner;
 	    }
 	    catch (Exception e)
 	    {
-	    	System.out.println(" bad arguments, waiting for 2 arguments [Integer] [inputURI");
+	    	System.out.println(" bad arguments, waiting for 2 arguments [Integer] [inputURI]");
 	    }
 	    job.setNumReduceTasks(1);
 	    job.setJarByClass(Top.class);
