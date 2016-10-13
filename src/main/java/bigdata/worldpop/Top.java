@@ -32,7 +32,8 @@ import org.apache.hadoop.util.ToolRunner;
 		  }
 			  
 		  public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-			  setup(context);
+			  String s = new IntWritable(k).toString();
+			  System.out.println(s);
 				if (key.get() == 0 ) return;
 				String tokens[] = value.toString().split(",");
 				if (tokens.length < 7 || tokens[4].length()==0) return;
@@ -46,7 +47,6 @@ import org.apache.hadoop.util.ToolRunner;
 				topKPop.put(new LongWritable(pop), new Text(tokens[2]));
 				if (topKPop.size() > k)
 					topKPop.remove(topKPop.firstKey());
-				cleanup(context);
 			}
 		  
 		  protected void cleanup(Context context) throws IOException, InterruptedException {
@@ -75,7 +75,8 @@ import org.apache.hadoop.util.ToolRunner;
 				  }
 				  cpt = 1;
 				  for (Text c : topKPop.descendingMap().values()) {
-					  context.write(new IntWritable(cpt), c);
+					  String s = new IntWritable(cpt).toString() + c.toString();
+					  System.out.println(s);
 					  cpt++;
 				  }
 			  }
@@ -87,11 +88,11 @@ import org.apache.hadoop.util.ToolRunner;
 	    try {
 	    	job.getConfiguration().set("k", args[0]);
 		    FileInputFormat.addInputPath(job, new Path(args[1]));
-		    FileOutputFormat.setOutputPath(job, new Path(args[2]));
+		    FileOutputFormat.setOutputPath(job, new Path("Result"));
 	    }
 	    catch (Exception e)
 	    {
-	    	System.out.println(" bad arguments, waiting for 3 arguments [Integer] [inputURI] [outputURI]");
+	    	System.out.println(" bad arguments, waiting for 2 arguments [Integer] [inputURI");
 	    }
 	    job.setNumReduceTasks(1);
 	    job.setJarByClass(Top.class);
