@@ -20,8 +20,6 @@ import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import bigdata.io.Pi;
-
 public class CopyFromLocal extends Configured implements Tool {
 
 	public int run(String[] args) throws Exception {
