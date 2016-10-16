@@ -1,10 +1,16 @@
 package bigdata.worldpop;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.TreeMap;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -76,7 +82,7 @@ import org.apache.hadoop.util.ToolRunner;
 		  }
 	  }
 	 
-		public static class TopKReducer extends Reducer<NullWritable, Text, NullWritable, Text> {
+		public static class TopKReducer extends Reducer<NullWritable, Text, IntWritable, Text> {
 			  public int k = 0;
 			  private TreeMap<LongWritable, Text> topKPop = new TreeMap<LongWritable, Text>();
 			  public void setup(Context context) {
@@ -93,8 +99,10 @@ import org.apache.hadoop.util.ToolRunner;
 						  topKPop.remove(topKPop.lastKey());
 					  cpt++;
 				  }
+				  int a = 1;
 				  for (Text t : topKPop.values()) {
-					  context.write(key, t);
+					  context.write(new IntWritable(a), t);
+					  a++;
 				  }
 			  }
 		}
@@ -102,10 +110,11 @@ import org.apache.hadoop.util.ToolRunner;
 	  public int run(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
 	    Configuration conf = new Configuration();
 	    Job job = Job.getInstance(conf, "TopK");
+	    Path pOut = new Path("Result");
 	    try {
 	    	job.getConfiguration().set("kPop", args[0]);
 		    FileInputFormat.addInputPath(job, new Path(args[1]));
-		    FileOutputFormat.setOutputPath(job, new Path("Result"));
+		    FileOutputFormat.setOutputPath(job, pOut);
 	    }
 	    catch (Exception e)
 	    {
@@ -118,10 +127,29 @@ import org.apache.hadoop.util.ToolRunner;
 	    job.setMapOutputValueClass(Text.class);
 	    job.setCombinerClass(TopKCombiner.class);
 	    job.setReducerClass(TopKReducer.class);
-	    job.setOutputKeyClass(NullWritable.class);
+	    job.setOutputKeyClass(IntWritable.class);
 	    job.setOutputValueClass(Text.class);
 	    job.setOutputFormatClass(TextOutputFormat.class);
-	    return job.waitForCompletion(true) ? 0 : 1;
+	    int jobComplete = 1;
+	    jobComplete = job.waitForCompletion(true) ? 0 : 1;
+	    if(job.isSuccessful()){
+	    	FileSystem fs = FileSystem.get(conf);
+	    	Path p = new Path(FileOutputFormat.getOutputPath(job)+"/part-r-00000");
+	    	FileStatus[] fss = fs.listStatus(p);
+	        for (FileStatus status : fss) {
+	            Path path = status.getPath();
+	            //SequenceFile.Reader reader = new SequenceFile.Reader(conf, SequenceFile.Reader.file(path));
+	            FSDataInputStream inputStream = fs.open(path);
+	            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+	            String record;
+	            System.out.println("\tResults");
+	            while((record = reader.readLine()) != null) {
+	                System.out.println("\t\t"+record);
+	            }
+	            reader.close();
+	        }
+	    }
+	    return jobComplete;
 	  }
 	  
 	  public static void main(String args[]) throws Exception {
