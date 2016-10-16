@@ -1,7 +1,5 @@
 package bigdata.worldpop;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.hadoop.conf.Configuration;
@@ -29,7 +27,7 @@ import org.apache.hadoop.util.ToolRunner;
 		  @Override
 		  public void setup(Context context) {
 			  Configuration conf = context.getConfiguration();
-			  k = Integer.parseInt(conf.get("k"));
+			  k = Integer.parseInt(conf.get("kPop"));
 		  }
 			  
 		  public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
@@ -48,13 +46,9 @@ import org.apache.hadoop.util.ToolRunner;
 				if (topKPop.size() > k)
 					topKPop.remove(topKPop.firstKey());
 			}
-		  
 		  protected void cleanup(Context context) throws IOException, InterruptedException {
-			  Set<LongWritable> ks = topKPop.keySet();
-			  Iterator<LongWritable> it = ks.iterator();
-			  while(it.hasNext()){
-				  LongWritable lw = it.next();
-				  context.write(NullWritable.get(), topKPop.get(lw));
+			  for(Text t : topKPop.values()){
+				  context.write(NullWritable.get(), t);
 			  }
 		  }
 	  }
@@ -75,28 +69,26 @@ import org.apache.hadoop.util.ToolRunner;
 		  }
 	  }*/
 	 
-		public static class TopKReducer extends Reducer<NullWritable, Text, LongWritable, Text> {
+		public static class TopKReducer extends Reducer<NullWritable, Text, NullWritable, Text> {
 			  public int k = 0;
 			  private TreeMap<LongWritable, Text> topKPop = new TreeMap<LongWritable, Text>();
 			  public void setup(Context context) {
 				  Configuration conf = context.getConfiguration();
-				  k = Integer.parseInt(conf.get("k"));
+				  k = Integer.parseInt(conf.get("kPop"));
 			  	}
 			  
-			  public void reduce(LongWritable key, Iterable<Text> values, Context context) throws IOException,
+			  public void reduce(NullWritable key, Iterable<Text> values, Context context) throws IOException,
 			  				InterruptedException {
-				  /*long cpt = 1;
+				  long cpt = 1;
 				  for (Text value : values) {
-					  topKPop.put(new LongWritable(cpt), value);
+					  topKPop.put(new LongWritable(cpt), new Text(value));
 					  if (topKPop.size() > k)
 						  topKPop.remove(topKPop.firstKey());
 					  cpt++;
 				  }
-				  cpt = 1;
-				  for (Text c : topKPop.descendingMap().values()) {
-					  context.write(new LongWritable(cpt), c);
-					  cpt++;
-				  }*/
+				  for (Text t : topKPop.values()) {
+					  context.write(key, t);
+				  }
 			  }
 		}
 		  			
@@ -104,7 +96,7 @@ import org.apache.hadoop.util.ToolRunner;
 	    Configuration conf = new Configuration();
 	    Job job = Job.getInstance(conf, "TopK");
 	    try {
-	    	job.getConfiguration().set("k", args[0]);
+	    	job.getConfiguration().set("kPop", args[0]);
 		    FileInputFormat.addInputPath(job, new Path(args[1]));
 		    FileOutputFormat.setOutputPath(job, new Path("Result"));
 	    }
@@ -119,7 +111,7 @@ import org.apache.hadoop.util.ToolRunner;
 	    job.setMapOutputValueClass(Text.class);
 	    //job.setCombinerClass(TopKCombiner.class);
 	    job.setReducerClass(TopKReducer.class);
-	    job.setOutputKeyClass(LongWritable.class);
+	    job.setOutputKeyClass(NullWritable.class);
 	    job.setOutputValueClass(Text.class);
 	    job.setOutputFormatClass(TextOutputFormat.class);
 	    return job.waitForCompletion(true) ? 0 : 1;
