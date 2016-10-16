@@ -83,7 +83,7 @@ import org.apache.hadoop.util.ToolRunner;
 				  for (Text value : values) {
 					  topKPop.put(new LongWritable(cpt), new Text(value));
 					  if (topKPop.size() > k)
-						  topKPop.remove(topKPop.firstKey());
+						  topKPop.remove(topKPop.lastKey());
 					  cpt++;
 				  }
 				  for (Text t : topKPop.values()) {
