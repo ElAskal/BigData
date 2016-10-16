@@ -53,21 +53,28 @@ import org.apache.hadoop.util.ToolRunner;
 		  }
 	  }
 	  
-	  /*public static class TopKCombiner extends Reducer<NullWritable, Text, NullWritable, Text> {
+	  public static class TopKCombiner extends Reducer<NullWritable, Text, NullWritable, Text> {
 		  public int k = 0;
-		  private TreeMap<NullWritable, Text> topKPop = new TreeMap<NullWritable, Text>();
+		  private TreeMap<LongWritable, Text> topKPop = new TreeMap<LongWritable, Text>();
 		  public void setup(Context context) {
 			  Configuration conf = context.getConfiguration();
-			  k = Integer.parseInt(conf.get("k"));
+			  k = Integer.parseInt(conf.get("kPop"));
 		  	}
 		  
 		  public void reduce(NullWritable key, Iterable<Text> values, Context context) throws IOException,
 		  				InterruptedException {
-			  for (Text c : topKPop.descendingMap().values()) {
-				  context.write(NullWritable.get(), c);
+			  long cpt = 1;
+			  for (Text value : values) {
+				  topKPop.put(new LongWritable(cpt), new Text(value));
+				  if (topKPop.size() > k)
+					  topKPop.remove(topKPop.lastKey());
+				  cpt++;
+			  }
+			  for(Text t : topKPop.values()){
+				  context.write(key, t);
 			  }
 		  }
-	  }*/
+	  }
 	 
 		public static class TopKReducer extends Reducer<NullWritable, Text, NullWritable, Text> {
 			  public int k = 0;
@@ -109,7 +116,7 @@ import org.apache.hadoop.util.ToolRunner;
 	    job.setMapperClass(TopKMapper.class);
 	    job.setMapOutputKeyClass(NullWritable.class);
 	    job.setMapOutputValueClass(Text.class);
-	    //job.setCombinerClass(TopKCombiner.class);
+	    job.setCombinerClass(TopKCombiner.class);
 	    job.setReducerClass(TopKReducer.class);
 	    job.setOutputKeyClass(NullWritable.class);
 	    job.setOutputValueClass(Text.class);
