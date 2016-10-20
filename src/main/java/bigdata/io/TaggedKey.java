@@ -34,7 +34,8 @@ public class TaggedKey implements WritableComparable {
 	public int compareTo(Object o) {
 		if (o instanceof TaggedKey)
 		{
-			if (naturalKey.equals(((TaggedKey) o).naturalKey) && (dataKey == (TaggedKey o).dataKey))
+			TaggedKey tmp = (TaggedKey) o;
+			if (naturalKey.equals(tmp.naturalKey) && (dataKey == tmp.dataKey))
 			{
 				return 0;
 			}
