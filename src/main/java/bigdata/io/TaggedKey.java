@@ -9,24 +9,24 @@ import org.apache.hadoop.io.WritableComparable;
 public class TaggedKey implements WritableComparable {
 	
 	public TaggedValue naturalKey;
-	public String dataKey;
+	public int dataKey;
 	
 	
 	public TaggedKey(){}
 	
-	public TaggedKey(String data, Boolean city, String name)
+	public TaggedKey(int data, Boolean city, String name)
 	{
 		this.dataKey = data;
 		this.naturalKey = new TaggedValue(city, name);
 	}
 	public void write(DataOutput out) throws IOException {
-		out.writeBytes(dataKey);
+		out.writeInt(dataKey);
 		out.writeBoolean(naturalKey.isCity);
 		out.writeBytes(naturalKey.name);		
 	}
 
 	public void readFields(DataInput in) throws IOException {
-		dataKey = in.readLine();
+		dataKey = in.readInt();
 		naturalKey.isCity = in.readBoolean();
 		naturalKey.name = in.readLine();
 	}
@@ -34,7 +34,7 @@ public class TaggedKey implements WritableComparable {
 	public int compareTo(Object o) {
 		if (o instanceof TaggedKey)
 		{
-			if (naturalKey.equals(((TaggedKey) o).naturalKey) && dataKey.equals(((TaggedKey) o).dataKey))
+			if (naturalKey.equals(((TaggedKey) o).naturalKey) && (dataKey == (TaggedKey o).dataKey))
 			{
 				return 0;
 			}
