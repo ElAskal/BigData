@@ -27,6 +27,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
+import bigdata.io.TaggedKey;
 import bigdata.io.TaggedValue;
 
 public class ScalJoin extends Configured implements Tool{
@@ -58,8 +59,15 @@ public class ScalJoin extends Configured implements Tool{
 		}
 
 		public int getPartition(Text arg0, TaggedValue arg1, int arg2) {
-			// TODO Auto-generated method stub
-			return 0;
+			Boolean city = arg1.isCity;
+			if (city)
+			{
+				return 1 % arg2;
+			}
+			else 
+			{
+				return 2 % arg2;
+			}
 		}
 		
 	}
