@@ -34,7 +34,7 @@ public class RSJoin extends Configured implements Tool{
 		public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 			String tokens[] = value.toString().split(",");
 			TaggedValue tv = new TaggedValue(true, tokens[2]);
-			context.write(new Text(tokens[0]+","+tokens[3]), tv);
+			context.write(new Text(tokens[0].toLowerCase()+","+tokens[3]), tv);
 			
 		}
 	}
@@ -43,22 +43,30 @@ public class RSJoin extends Configured implements Tool{
 		public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 			String tokens[] = value.toString().split(",");
 			TaggedValue tv = new TaggedValue(false, tokens[2]);
-			context.write(new Text(tokens[0]+","+tokens[1]), tv);
+			context.write(new Text(tokens[0].toLowerCase()+","+tokens[1]), tv);
 		}
 	}
 	
-	public static class RSJoinReducer extends Reducer<Text, TaggedValue, Text, Text>{
+	public static class RSJoinReducer extends Reducer<Text, TaggedValue, NullWritable, Text>{
 		public void reduce(Text key, Iterable<TaggedValue> values, Context context) throws IOException,
 			InterruptedException {
-			List<String> lc = new ArrayList<String>();
-			List<String> lr = new ArrayList<String>();
+			Text lc = new Text();
+			Text lr = new Text();
 			for(TaggedValue value : values){
 				if(value.isCity == true){
-					lc.add(value.name);
+					lc.set(value.name);
 				}
-				else
-					lr.add(value.name);
+				else 
+				{
+					lr.set(value.name);
+				}
 			}
+			if (lr.toString().isEmpty() || lc.toString().isEmpty())
+				return;
+			
+			String s = lr.toString() + ", " + lc.toString();
+			context.write(NullWritable.get(), new Text(s));
+			
 		}
 	}
 	
@@ -71,10 +79,10 @@ public class RSJoin extends Configured implements Tool{
 		FileOutputFormat.setOutputPath(job, pOut);
 	    job.setNumReduceTasks(1);
 	    job.setJarByClass(Top.class);
-	    job.setMapOutputKeyClass(NullWritable.class);
+	    job.setMapOutputKeyClass(Text.class);
 	    job.setMapOutputValueClass(TaggedValue.class);
 	    job.setReducerClass(RSJoinReducer.class);
-	    job.setOutputKeyClass(Text.class);
+	    job.setOutputKeyClass(NullWritable.class);
 	    job.setOutputValueClass(Text.class);
 	    job.setOutputFormatClass(TextOutputFormat.class);
 	    int jobComplete = 1;
