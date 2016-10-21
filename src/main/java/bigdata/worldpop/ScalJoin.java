@@ -12,6 +12,7 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -40,8 +41,10 @@ public class ScalJoin extends Configured implements Tool{
 	public static class ScalJoinWCPMapper extends Mapper<LongWritable, Text, TaggedKey, TaggedValue>{
 		public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 			String tokens[] = value.toString().split(",");
+			if (tokens.length < 7) return;
 			TaggedKey tk = new TaggedKey(tokens[3], true, tokens[0].toLowerCase() + ",");
-			context.write(tk, new TaggedValue(true, tokens[1]));
+			TaggedValue tv = new TaggedValue(true, tokens[1]);
+			context.write(tk, tv);
 			
 		}
 	}
@@ -50,7 +53,8 @@ public class ScalJoin extends Configured implements Tool{
 		public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 			String tokens[] = value.toString().split(",");
 			TaggedKey tk = new TaggedKey(tokens[1], false, tokens[0].toLowerCase() + ",");
-			context.write(tk, new TaggedValue(false, tokens[2]));
+			TaggedValue tv = new TaggedValue(false, tokens[2]);
+			context.write(tk, tv);
 		}
 	}
 	
@@ -88,26 +92,35 @@ public class ScalJoin extends Configured implements Tool{
 		}
 	}
 	
-	public static class ScalJoinReducer extends Reducer<TaggedKey, TaggedValue, NullWritable, Text>{
+	public static class ScalJoinReducer extends Reducer<TaggedKey, TaggedValue, Text, Text>{
+		
+		private Text outputKey = new Text("");
+		
+		public String firstElement(Iterable<TaggedValue> values)
+		{
+			Iterator <TaggedValue> it = values.iterator();
+			String s = it.next().name;
+			return s;
+		}
 		public void reduce(TaggedKey key, Iterable<TaggedValue> values, Context context) throws IOException,
 		InterruptedException {
-		Text lc = new Text();
-		Text lr = new Text();
-		for(TaggedValue value : values){
-			if(value.getCity()){
-				lc.set(value.name);
-			}
-			else 
+			Iterator<TaggedValue> it = values.iterator();
+			StringBuffer s = new StringBuffer("");
+			for (TaggedValue v : values)
 			{
-				lr.set(value.name);
-				String s = lr.toString() + ", " + lc.toString();
-				context.write(NullWritable.get(), new Text(s));	
-			}
-		if (lr.toString().isEmpty() || lc.toString().isEmpty())
-			return;
+				if (!key.isCity)
+					outputKey = new Text(v.name);
+				if (!outputKey.toString().equals("") && !outputKey.toString().equals(v.name))
+					context.write(outputKey, new Text(v.name));
+				
+			}	
 		}
 	}
-	}
+		
+	
+		
+		
+	
 	public int run(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
 	    Configuration conf = new Configuration();
 	    Job job = Job.getInstance(conf, "RSJoin");
@@ -123,7 +136,7 @@ public class ScalJoin extends Configured implements Tool{
 	    job.setGroupingComparatorClass(NaturalWritableComparator.class);
 	    job.setSortComparatorClass(DataWritableComparator.class);
 	    job.setReducerClass(ScalJoinReducer.class);
-	    job.setOutputKeyClass(NullWritable.class);
+	    job.setOutputKeyClass(Text.class);
 	    job.setOutputValueClass(Text.class);
 	    job.setOutputFormatClass(TextOutputFormat.class);
 	    int jobComplete = 1;
@@ -152,4 +165,7 @@ public class ScalJoin extends Configured implements Tool{
 			System.exit(ToolRunner.run(new ScalJoin(), args));
 	  }
 
-}
+	}
+
+
+

@@ -53,28 +53,17 @@ public class TaggedKey implements WritableComparable<Object> {
 		}
 		if (isCity)
 		{
-			return 1;
+			return -1;
 		}
 		else
 		{
-			return -1;
+			return 1;
 		}
 
 	}
 	
 	public int compareTo(TaggedKey t)
-	{/*
-		int res = country.compareTo(t.country);
-		if (res != 0)
-		{
-			return res;
-		}
-		res = region.compareTo(t.region);
-		if (res != 0)
-		{
-			return res;
-		}
-		return 0;*/
+	{
 		return get() - t.get();
 	}
 
