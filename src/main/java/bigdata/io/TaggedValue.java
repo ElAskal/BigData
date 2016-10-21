@@ -29,5 +29,8 @@ public class TaggedValue implements Writable{
 		name = in.readLine();
 		
 	}
-
+	public boolean getCity()
+	{
+		return isCity;
+	}
 }

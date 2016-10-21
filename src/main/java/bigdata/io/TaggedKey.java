@@ -6,41 +6,80 @@ import java.io.IOException;
 
 import org.apache.hadoop.io.WritableComparable;
 
-public class TaggedKey implements WritableComparable {
+public class TaggedKey implements WritableComparable<Object> {
 	
-	public TaggedValue naturalKey;
-	public int dataKey;
+	public boolean isCity;
+	public String region;
+	public String country;
 	
 	
 	public TaggedKey(){}
 	
-	public TaggedKey(int data, Boolean city, String name)
+	public TaggedKey(String r , boolean city, String name)
 	{
-		this.dataKey = data;
-		this.naturalKey = new TaggedValue(city, name);
+		this.isCity = city;
+		this.region = r;
+		this.country = name;
 	}
+
+	
 	public void write(DataOutput out) throws IOException {
-		out.writeInt(dataKey);
-		out.writeBoolean(naturalKey.isCity);
-		out.writeBytes(naturalKey.name);		
+		out.writeBoolean(isCity);
+		out.writeUTF(country);
+		out.writeUTF(region);
 	}
 
 	public void readFields(DataInput in) throws IOException {
-		dataKey = in.readInt();
-		naturalKey.isCity = in.readBoolean();
-		naturalKey.name = in.readLine();
+		isCity = in.readBoolean();
+		country = in.readUTF();
+		region = in.readUTF();
 	}
 
 	public int compareTo(Object o) {
-		if (o instanceof TaggedKey)
+		TaggedKey tmp = (TaggedKey) o;
+		int res = country.compareTo(tmp.country);
+		if (res != 0)
 		{
-			TaggedKey tmp = (TaggedKey) o;
-			if (naturalKey.equals(tmp.naturalKey) && (dataKey == tmp.dataKey))
-			{
-				return 0;
-			}
+				return res;
 		}
-		return 1;
+		res = region.compareTo(tmp.region);
+		if (res != 0)
+		{
+			return res;
+		}		
+		if ((isCity && tmp.isCity) || (!isCity && !tmp.isCity))
+		{
+			return 0;
+		}
+		if (isCity)
+		{
+			return 1;
+		}
+		else
+		{
+			return -1;
+		}
+
+	}
+	
+	public int compareTo(TaggedKey t)
+	{/*
+		int res = country.compareTo(t.country);
+		if (res != 0)
+		{
+			return res;
+		}
+		res = region.compareTo(t.region);
+		if (res != 0)
+		{
+			return res;
+		}
+		return 0;*/
+		return get() - t.get();
 	}
 
+	public int get(){
+		return region.hashCode() + country.hashCode();
+	}
+	
 }

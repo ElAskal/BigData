@@ -11,7 +11,7 @@ public class BigData {
 			pgd.addClass("worldpop", bigdata.worldpop.TPWorldPopulation.class, "filter/resume worlpopulation file");
 			pgd.addClass("IOFormat", bigdata.io.TPInputFormat.class, "Create a random point2D import format");
 			pgd.addClass("topK", bigdata.worldpop.TPTopK.class, "Create a top 10");
-			pgd.addClass("RSJoin", bigdata.worldpop.RSJoin.class, "Create a RS join of two files");
+			pgd.addClass("Join", bigdata.worldpop.TPJoin.class, "Create a RS join of two files");
 			exitCode = pgd.run(args);
 		} catch (Throwable e1)  {
 			e1.printStackTrace();
